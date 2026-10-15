@@ -4,7 +4,7 @@ export default function ShippingPolicyPage() {
   return (
     <PolicyPage
       title="Shipping policy"
-      description="How customer delivery is currently represented in checkout and what to confirm with Umer Mobile Parts."
+      description="How customer delivery is currently represented in checkout and what to confirm with the store."
       sections={[
         {
           heading: "Delivery confirmation",

@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function ShopCategoryClient({ category }: Props) {
-  const { products, categories, banners, status, error: catalogError } = useCatalog();
+  const { products, categories, banners, settings, status, error: catalogError } = useCatalog();
   const [search, setSearch] = useState("");
   const [brand, setBrand] = useState("all");
   const [model, setModel] = useState("all");
@@ -288,7 +288,7 @@ export default function ShopCategoryClient({ category }: Props) {
           <div className="mt-7 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div className="max-w-3xl">
               <span className="inline-flex rounded-full border border-orange-200 bg-white px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-orange-700">
-                Umer Mobile Parts
+                {settings.storeName}
               </span>
               <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
                 {matchedCategory.name}

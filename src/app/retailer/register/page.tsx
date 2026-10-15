@@ -9,96 +9,123 @@ export default function RetailerRegister() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
 
   async function submitApplication(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError("");
+    let uploadedDocumentPath: string | null = null;
 
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) {
-      setError("Supabase is not configured. Your application has not been submitted.");
-      setBusy(false);
-      return;
-    }
+    try {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        setError("Retailer applications are unavailable because the store service is not configured.");
+        return;
+      }
 
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "").trim().toLowerCase();
-    const businessType = String(formData.get("business_type") ?? "");
-    if (!email || !formData.has("terms_accepted")) {
-      setError("Enter your email address and accept the application terms before submitting.");
-      setBusy(false);
-      return;
-    }
-    const documentFile = formData.get("required_document");
-    if (!(documentFile instanceof File) || documentFile.size === 0) {
-      setError("Upload your required shop/business proof document.");
-      setBusy(false);
-      return;
-    }
-    const extensions: Record<string, string> = {
-      "application/pdf": "pdf",
-      "image/jpeg": "jpg",
-      "image/png": "png",
-    };
-    const extension = extensions[documentFile.type];
-    if (!extension || documentFile.size > 10 * 1024 * 1024) {
-      setError("Choose a PDF, JPG or PNG shop/business proof document smaller than 10 MB.");
-      setBusy(false);
-      return;
-    }
-    const documentPath = `applications/${crypto.randomUUID()}.${extension}`;
-    const { error: uploadError } = await supabase.storage
-      .from("retailer-documents")
-      .upload(documentPath, documentFile, {
-        contentType: documentFile.type,
-        upsert: false,
-      });
-    if (uploadError) {
-      setError(`Could not upload required document: ${uploadError.message}`);
-      setBusy(false);
-      return;
-    }
-    const { error: insertError } = await supabase.from("retailer_applications").insert({
-      owner_name: String(formData.get("owner_name") ?? "").trim(),
-      email,
-      business_name: String(formData.get("business_name") ?? "").trim(),
-      business_type: businessType,
-      phone: String(formData.get("phone") ?? "").trim(),
-      address: String(formData.get("address") ?? "").trim(),
-      city: String(formData.get("city") ?? "").trim(),
-      business_details: String(formData.get("business_details") ?? "").trim(),
-      required_document_path: documentPath,
-      terms_accepted: true,
-      status: "pending",
-    });
+      const formData = new FormData(event.currentTarget);
+      const email = String(formData.get("email") ?? "").trim().toLowerCase();
+      if (!email || !formData.has("terms_accepted")) {
+        setError("Enter your email address and accept the application terms before submitting.");
+        return;
+      }
 
-    if (insertError) {
-      const { error: cleanupError } = await supabase.storage
+      const documentFile = formData.get("required_document");
+      if (!(documentFile instanceof File) || documentFile.size === 0) {
+        setError("Upload your shop or business proof document to continue.");
+        return;
+      }
+
+      const extensions: Record<string, string> = {
+        "application/pdf": "pdf",
+        "image/jpeg": "jpg",
+        "image/png": "png",
+      };
+      const extension = extensions[documentFile.type];
+      if (!extension || documentFile.size > 10 * 1024 * 1024) {
+        setError("Choose a PDF, JPG or PNG business document up to 10 MB.");
+        return;
+      }
+
+      uploadedDocumentPath = `applications/${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await supabase.storage
         .from("retailer-documents")
-        .remove([documentPath]);
-      setError(cleanupError
-        ? `Could not submit your application (${insertError.message}); uploaded document cleanup also failed (${cleanupError.message}).`
-        : `Could not submit your application: ${insertError.message}`);
-      setBusy(false);
-      return;
-    }
+        .upload(uploadedDocumentPath, documentFile, {
+          contentType: documentFile.type,
+          upsert: false,
+        });
+      if (uploadError) {
+        uploadedDocumentPath = null;
+        setError(`Could not upload the business document: ${uploadError.message}`);
+        return;
+      }
 
-    setNotice("Application and required document submitted. Your application is under review. If approved, you will receive a secure email link to set your password.");
-    router.push("/retailer/pending");
+      const { error: insertError } = await supabase.from("retailer_applications").insert({
+        owner_name: String(formData.get("owner_name") ?? "").trim(),
+        email,
+        business_name: String(formData.get("business_name") ?? "").trim(),
+        business_type: String(formData.get("business_type") ?? ""),
+        phone: String(formData.get("phone") ?? "").trim(),
+        address: String(formData.get("address") ?? "").trim(),
+        city: String(formData.get("city") ?? "").trim(),
+        business_details: String(formData.get("business_details") ?? "").trim(),
+        required_document_path: uploadedDocumentPath,
+        terms_accepted: true,
+        status: "pending",
+      });
+
+      if (insertError) {
+        throw new Error(`Could not submit your application: ${insertError.message}`);
+      }
+
+      uploadedDocumentPath = null;
+      router.replace("/retailer/pending");
+    } catch (submissionError) {
+      const message = submissionError instanceof Error
+        ? submissionError.message
+        : "An unexpected error prevented the application from being submitted.";
+      if (uploadedDocumentPath) {
+        const supabase = getSupabaseBrowserClient();
+        let cleanupMessage = "";
+        if (supabase) {
+          try {
+            const { error: cleanupError } = await supabase.storage
+              .from("retailer-documents")
+              .remove([uploadedDocumentPath]);
+            cleanupMessage = cleanupError?.message ?? "";
+          } catch (cleanupError) {
+            cleanupMessage = cleanupError instanceof Error
+              ? cleanupError.message
+              : "Unknown document cleanup error.";
+          }
+        } else {
+          cleanupMessage = "The retailer document service is unavailable.";
+        }
+        setError(cleanupMessage
+          ? `${message} The uploaded document could not be removed: ${cleanupMessage}`
+          : message);
+      } else {
+        setError(message);
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-      <section className="mx-auto max-w-2xl px-4 py-14">
+      <main className="site-container max-w-2xl py-14">
+      <section>
         <div className="mb-8">
-          <p className="text-sm font-black uppercase tracking-widest text-orange-500">Retailer Application</p>
-          <h1 className="mt-2 text-4xl font-black">Become a Umer retailer</h1>
-          <p className="mt-3 text-slate-500">Share your business and contact details so the team can review your application. Wholesale terms will be discussed separately.</p>
+          <Link href="/retailer" className="text-sm font-bold text-orange-700 hover:text-orange-800">
+            ← Retailer programme
+          </Link>
+          <p className="site-eyebrow mt-6">Retailer application</p>
+          <h1 className="site-section-heading mt-2">Tell us about your business.</h1>
+          <p className="site-copy mt-3">Complete the details below. The store will review your application and contact you about retailer access and ordering terms.</p>
         </div>
 
-        <div className="rounded-3xl border bg-white p-6 shadow-sm md:p-8">
-          <form onSubmit={submitApplication} className="grid gap-5">
+        <div className="site-card p-5 sm:p-8">
+          <form onSubmit={submitApplication} aria-busy={busy} className="retailer-form grid gap-5">
             <label className="text-sm font-bold text-slate-700">
               Owner full name
               <input name="owner_name" required maxLength={120} autoComplete="name" className="mt-2 w-full rounded-xl border p-4" />
@@ -152,17 +179,17 @@ export default function RetailerRegister() {
               </span>
             </label>
             <p className="text-xs leading-5 text-slate-500">Submitting an application does not create a login or send an authentication email. The store will contact you using the email or phone above after review.</p>
-            {notice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{notice}</p>}
             {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p>}
-            <button disabled={busy} className="rounded-xl bg-orange-500 px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300">
-              {busy ? "Submitting…" : "Submit Application"}
+            <button disabled={busy} className="site-button site-button-primary w-full disabled:cursor-not-allowed disabled:bg-slate-300">
+              {busy ? "Submitting application…" : "Submit application"}
             </button>
           </form>
         </div>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          Already approved? <Link href="/retailer/login" className="font-bold text-orange-600">Login here</Link>
+          Already approved? <Link href="/retailer/login" className="font-bold text-orange-700">Sign in to your retailer account</Link>
         </p>
       </section>
+      </main>
   );
 }

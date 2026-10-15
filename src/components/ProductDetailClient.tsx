@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useCart } from "@/components/CartProvider";
@@ -14,6 +13,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useCatalog } from "@/components/CatalogProvider";
 import { formatStorePrice, retailerPrice } from "@/lib/pricing";
 import StarRatingDisplay from "@/components/StarRatingDisplay";
+import ProductImage from "@/components/ProductImage";
 
 type Props = {
   product: Product;
@@ -27,7 +27,7 @@ type ProductReview = {
 
 export default function ProductDetailClient({ product }: Props) {
   const { addToCart } = useCart();
-  const { isRetailer, retailerAccessError } = useCatalog();
+  const { isRetailer, retailerAccessError, settings } = useCatalog();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
@@ -287,10 +287,9 @@ export default function ProductDetailClient({ product }: Props) {
               </div>
 
               <div className="relative aspect-square">
-                <Image
+                <ProductImage
                   src={product.image}
                   alt={product.name}
-                  fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 55vw"
                   className="object-contain p-5 transition duration-500 hover:scale-105 sm:p-10"
@@ -319,7 +318,7 @@ export default function ProductDetailClient({ product }: Props) {
 
           <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-8 lg:p-9">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">
-              Umer Mobile Parts · {product.brand}
+              {settings.storeName} · {product.brand}
             </p>
 
             <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight sm:text-4xl">

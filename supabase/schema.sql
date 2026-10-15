@@ -944,9 +944,9 @@ on conflict (name) do nothing;
 insert into public.products
   (slug, name, brand, model, category, quality, price, old_price, stock, rating, image, is_published)
 values
-  ('iphone-13-lcd-premium', 'iPhone 13 LCD Premium', 'Apple', 'iPhone 13', 'Displays', 'Premium', 12500, 14000, 12, 4.8, 'https://images.unsplash.com/photo-1592286927505-2fd7b8e6b9a0?auto=format&fit=crop&w=900&q=80', true),
+  ('iphone-13-lcd-premium', 'iPhone 13 LCD Premium', 'Apple', 'iPhone 13', 'Displays', 'Premium', 12500, 14000, 12, 4.8, '', true),
   ('samsung-a15-lcd', 'Samsung A15 LCD', 'Samsung', 'A15', 'Displays', 'Original', 7200, 8000, 18, 4.7, 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=900&q=80', true),
-  ('iphone-11-battery', 'iPhone 11 Battery', 'Apple', 'iPhone 11', 'Batteries', 'Premium', 4200, 4800, 25, 4.6, 'https://images.unsplash.com/photo-1609592424274-7f7f8f6e8b35?auto=format&fit=crop&w=900&q=80', true),
+  ('iphone-11-battery', 'iPhone 11 Battery', 'Apple', 'iPhone 11', 'Batteries', 'Premium', 4200, 4800, 25, 4.6, '', true),
   ('samsung-s23-charging-flex', 'Samsung S23 Charging Flex', 'Samsung', 'S23', 'Charging Parts', 'Premium', 2800, 3200, 31, 4.5, 'https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=900&q=80', true),
   ('iphone-12-camera-glass', 'iPhone 12 Camera Glass', 'Apple', 'iPhone 12', 'Camera Parts', 'Original', 1600, 1900, 40, 4.9, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80', true),
   ('redmi-note-12-housing', 'Redmi Note 12 Housing', 'Xiaomi', 'Note 12', 'Housing', 'Premium', 2300, 2600, 15, 4.4, 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=80', true)
@@ -984,21 +984,28 @@ insert into public.site_content (content_key, content)
 values (
   'homepage',
   '{
-    "eyebrow": "UMER MOBILE PARTS",
-    "headline": "Your Repair Starts With the Right Part",
-    "description": "Explore displays, batteries, charging parts and more. Browse the catalog to find the mobile parts you need for the repair ahead.",
-    "button_label": "Shop Parts",
+    "eyebrow": "MOBILE REPAIR PARTS",
+    "headline": "The right part for your repair",
+    "description": "Search displays, batteries and repair parts by brand or model. Check product grade, compatibility and stock before you order.",
+    "button_label": "Browse all parts",
     "button_href": "/search",
+    "hero_highlights": ["Search by model", "Product details and stock", "Order support available"],
     "category_heading": "Shop by Category",
-    "category_description": "Find the spare part you need with a simpler category-based shopping experience.",
-    "featured_heading": "Featured Products"
+    "category_description": "Start with a part type, then check the product listing to confirm it matches your device.",
+    "brand_heading": "Browse by brand",
+    "brand_description": "Choose a brand to find products listed for its devices. Confirm the exact model before ordering.",
+    "featured_heading": "Featured parts",
+    "products_heading": "Explore more parts",
+    "retailer_heading": "Buying for a repair shop?",
+    "retailer_description": "Explore retailer access for business ordering. Product availability and retailer pricing are shown in the catalog when available.",
+    "retailer_button_label": "Retailer information"
   }'::jsonb
 )
 on conflict (content_key) do nothing;
 
 insert into public.site_settings (setting_key, setting_value)
 values
-  ('store', '{"name":"Umer Mobile Parts","support_email":"","phone":"","whatsapp":"","contact_verified":false}'::jsonb),
+  ('store', '{"name":"Umar Mobile Parts","support_email":"","phone":"","whatsapp":"","contact_verified":false}'::jsonb),
   ('delivery', '{"zones":[],"estimated_time":"","details_verified":false}'::jsonb),
   ('social', '{"instagram":"","facebook":"","tiktok":""}'::jsonb)
 on conflict (setting_key) do nothing;

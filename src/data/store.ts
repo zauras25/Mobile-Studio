@@ -29,7 +29,7 @@ export const products: Product[] = [
     retailerDiscountPercent: 0,
     stock: 12,
     rating: 4.8,
-    image: "https://images.unsplash.com/photo-1592286927505-2fd7b8e6b9a0?auto=format&fit=crop&w=900&q=80",
+    image: "",
     is_featured: true,
   },
   {
@@ -61,7 +61,7 @@ export const products: Product[] = [
     retailerDiscountPercent: 0,
     stock: 25,
     rating: 4.6,
-    image: "https://images.unsplash.com/photo-1609592424274-7f7f8f6e8b35?auto=format&fit=crop&w=900&q=80",
+    image: "",
     is_featured: true,
   },
   {

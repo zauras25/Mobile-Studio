@@ -22,7 +22,7 @@ export default function Footer() {
         <div>
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-xl font-black">
-              U
+              {settings.storeName.trim().charAt(0).toUpperCase() || "M"}
             </span>
             <span>
               <span className="block text-lg font-black">{settings.storeName}</span>
@@ -32,7 +32,7 @@ export default function Footer() {
             </span>
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">
-            Find mobile spare parts by category, brand and device model.
+            Browse mobile spare parts by category, device brand and model. Check product details and availability before ordering.
           </p>
         </div>
 
@@ -106,7 +106,7 @@ export default function Footer() {
               !settings.supportEmail &&
               socialLinks.length === 0 && (
               <p className="max-w-xs text-sm leading-6 text-slate-400">
-                Contact details are being confirmed. Check the FAQs for current information.
+                Visit Customer Care for current support options, FAQs and order information.
               </p>
             )}
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { STORE_NAME } from "@/lib/site-config";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -244,7 +245,7 @@ export default function AdminShell({
         </header>
         <div className="hidden h-12 items-center justify-between border-b border-slate-200 bg-white px-8 md:flex">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-            Umer Mobile Parts <span className="mx-2 text-orange-500">/</span> CMS
+            {STORE_NAME} <span className="mx-2 text-orange-500">/</span> CMS
           </p>
           <div className="flex items-center gap-5">
             <Link

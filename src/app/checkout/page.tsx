@@ -394,7 +394,7 @@ function CheckoutForm() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">
-            Mobile Studio · Checkout
+            {settings.storeName} · Checkout
           </p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
             How would you like to receive your order?

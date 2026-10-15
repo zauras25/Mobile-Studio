@@ -4,7 +4,7 @@ export default function PrivacyPolicyPage() {
   return (
     <PolicyPage
       title="Privacy policy"
-      description="How Umer Mobile Parts' current website uses account, order, review, and retailer application information."
+      description="How this store's website uses account, order, review, and retailer application information."
       sections={[
         {
           heading: "Information handled",

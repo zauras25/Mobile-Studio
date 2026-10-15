@@ -105,9 +105,9 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
       {/* Announcement bar */}
       <div className="bg-slate-950 px-3 py-2 text-center text-xs font-medium text-white sm:text-sm">
-        Umer Mobile Parts
+        Mobile parts for repair professionals and everyday customers
         <span className="mx-2 text-orange-400">|</span>
-        Wholesale &amp; Retail
+        Browse by part, brand or model
       </div>
 
       {/* Main header */}
@@ -117,11 +117,11 @@ export default function Header() {
           <Link
             href="/"
             onClick={closeMenus}
-            aria-label="Umer Mobile Parts home"
+            aria-label={`${settings.storeName} home`}
             className="flex min-w-0 items-center gap-2"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500 text-2xl font-black text-white shadow-sm">
-              U
+              {settings.storeName.trim().charAt(0).toUpperCase() || "M"}
             </span>
 
             <span className="min-w-0 leading-tight">
@@ -372,7 +372,7 @@ export default function Header() {
               href="/search"
               className="text-sm font-semibold text-slate-700 transition hover:text-orange-600"
             >
-              Product
+              Shop parts
             </Link>
 
             <Link
@@ -526,7 +526,7 @@ export default function Header() {
                 onClick={closeMenus}
                 className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-800 hover:bg-orange-50 hover:text-orange-700"
               >
-                Product
+                Shop parts
               </Link>
 
               <Link

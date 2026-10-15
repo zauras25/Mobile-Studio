@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { StoreBanner } from "@/components/CatalogProvider";
 
 type Props = {
@@ -11,19 +11,9 @@ type Props = {
 
 export default function BannerCarousel({ banners, label }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(true);
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-
-  useEffect(() => {
-    if (banners.length < 2 || !autoPlay || hovered || focused) return;
-
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % banners.length);
-    }, 5000);
-
-    return () => window.clearInterval(timer);
-  }, [autoPlay, banners.length, focused, hovered]);
+  const [unavailableImages, setUnavailableImages] = useState<Set<number>>(
+    () => new Set(),
+  );
 
   if (banners.length === 0) return null;
 
@@ -43,16 +33,12 @@ export default function BannerCarousel({ banners, label }: Props) {
       aria-label={label}
       aria-roledescription="carousel"
       className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
     >
       <div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-lg">
         <div
           className="flex transition-transform duration-700 ease-in-out motion-reduce:transition-none"
           style={{ transform: `translateX(-${visibleIndex * 100}%)` }}
-          aria-live={autoPlay && !hovered && !focused ? "off" : "polite"}
+          aria-live="polite"
         >
           {banners.map((banner, index) => (
             <div
@@ -67,12 +53,21 @@ export default function BannerCarousel({ banners, label }: Props) {
                 href={`/banner/${banner.id}`}
                 tabIndex={index === visibleIndex ? 0 : -1}
                 aria-label={`View banner: ${banner.title}`}
-                className="group relative flex aspect-[16/8] min-h-52 items-end overflow-hidden bg-cover bg-center p-5 sm:aspect-[16/6] sm:min-h-64 sm:p-8 lg:aspect-[16/5]"
-                style={{
-                  backgroundImage: `linear-gradient(90deg, rgba(15,23,42,.78), rgba(15,23,42,.08)), url("${banner.image_url}")`,
-                }}
+                className="banner-carousel-slide group relative flex aspect-[16/8] min-h-52 items-end overflow-hidden p-5 sm:aspect-[16/6] sm:min-h-64 sm:p-8 lg:aspect-[16/5]"
               >
-                <span className="text-xl font-black text-white transition group-hover:text-orange-200 sm:text-2xl lg:text-3xl">
+                {!unavailableImages.has(banner.id) && (
+                  <img
+                    src={banner.image_url}
+                    alt=""
+                    loading={index === visibleIndex ? "eager" : "lazy"}
+                    decoding="async"
+                    onError={() =>
+                      setUnavailableImages((current) => new Set(current).add(banner.id))
+                    }
+                    className="banner-carousel-image"
+                  />
+                )}
+                <span className="banner-carousel-title">
                   {banner.title}
                 </span>
               </Link>
@@ -101,15 +96,6 @@ export default function BannerCarousel({ banners, label }: Props) {
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setAutoPlay((playing) => !playing)}
-              aria-label={autoPlay ? "Pause automatic banner rotation" : "Resume automatic banner rotation"}
-              aria-pressed={!autoPlay}
-              className="absolute right-4 top-4 rounded-full bg-slate-950/70 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-950"
-            >
-              {autoPlay ? "Pause" : "Play"}
-            </button>
           </>
         )}
       </div>

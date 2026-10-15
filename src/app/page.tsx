@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useCatalog } from "@/components/CatalogProvider";
 import StarRatingDisplay from "@/components/StarRatingDisplay";
 import BannerCarousel from "@/components/BannerCarousel";
@@ -19,7 +19,6 @@ const categoryIcons: Record<string, string> = {
 };
 
 export default function HomePage() {
-  const [search, setSearch] = useState("");
   const { products, categories, brands: catalogBrands, reviews, homepage, banners } = useCatalog();
   const brands = useMemo(
     () => catalogBrands.length
@@ -28,27 +27,10 @@ export default function HomePage() {
     [catalogBrands, products]
   );
 
-  const featuredProducts = useMemo(() => {
-    const list = Array.isArray(products) ? products.filter((product) => product.is_featured) : [];
-    if (!search.trim()) return list.slice(0, 8);
-
-    const query = search.toLowerCase().trim();
-
-    return list
-      .filter((product) =>
-        [
-          product.name,
-          product.brand,
-          product.model,
-          product.category,
-        ]
-          .filter(Boolean)
-          .some((value) =>
-            String(value).toLowerCase().includes(query)
-          )
-      )
-      .slice(0, 8);
-  }, [search, products]);
+  const featuredProducts = useMemo(
+    () => (Array.isArray(products) ? products.filter((product) => product.is_featured).slice(0, 8) : []),
+    [products],
+  );
 
   const categoryList = Array.isArray(categories)
     ? categories
@@ -56,62 +38,66 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Hero */}
-      <section className="relative isolate flex min-h-[560px] items-center overflow-hidden bg-slate-950 sm:min-h-[620px]">
-        <div className="absolute inset-0 -z-10">
-          <Image
-            src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=2400&q=85"
-            alt=""
-            fill
-            sizes="100vw"
-            fetchPriority="high"
-            className="hero-image-drift object-cover object-[68%_center]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/35" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-slate-950/20" />
-        </div>
+      <section className="store-hero">
+        <div className="site-container store-hero-grid">
+          <div className="store-hero-copy">
+            <span className="store-hero-eyebrow">{homepage.eyebrow}</span>
+            <h1 className="store-hero-title">{homepage.headline}</h1>
+            <p className="store-hero-description">{homepage.description}</p>
 
-        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-          <div className="max-w-3xl">
-            <span className="hero-enter inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold tracking-wide text-orange-200 shadow-lg shadow-black/10 backdrop-blur">
-              {homepage.eyebrow}
-            </span>
+            <form action="/search" method="GET" role="search" className="store-search">
+              <label htmlFor="homepage-product-search" className="sr-only">
+                Search parts by name, brand or device model
+              </label>
+              <input
+                id="homepage-product-search"
+                type="search"
+                name="q"
+                placeholder="Search by model, brand or part"
+              />
+              <button type="submit" className="site-button site-button-primary">
+                Find a part
+                <span aria-hidden="true">→</span>
+              </button>
+            </form>
 
-            <h1 className="hero-enter hero-enter-delay-1 mt-6 max-w-3xl text-5xl font-black leading-[0.98] tracking-tight text-white sm:text-6xl lg:text-7xl xl:text-8xl">
-              {homepage.headline}
-            </h1>
-
-            <p className="hero-enter hero-enter-delay-2 mt-6 max-w-2xl text-base leading-8 text-white/80 sm:text-lg sm:leading-9">
-              {homepage.description}
-            </p>
-
-            <div className="hero-enter hero-enter-delay-3 mt-8 flex flex-wrap gap-3">
-              <Link
-                href={homepage.button_href}
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-orange-500 px-6 py-3 font-bold text-white shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-orange-600"
-              >
+            <div className="store-hero-actions">
+              <Link href={homepage.button_href} className="store-hero-link">
                 {homepage.button_label}
                 <span className="ml-2" aria-hidden="true">→</span>
               </Link>
-
-              <a
-                href="#categories"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/30 bg-white/10 px-6 py-3 font-bold text-white backdrop-blur transition hover:border-white/60 hover:bg-white/15"
-              >
-                Explore Categories
+              <a href="#categories" className="store-hero-link">
+                Browse categories
               </a>
             </div>
 
             {homepage.hero_highlights.filter((highlight) => highlight.trim()).length > 0 && (
-              <ul className="hero-enter hero-enter-delay-3 mt-8 flex flex-wrap gap-2.5 text-sm text-white/80">
-                {homepage.hero_highlights.filter((highlight) => highlight.trim()).map((highlight, index) => (
-                  <li key={`${index}-${highlight}`} className="rounded-full border border-white/15 bg-slate-950/25 px-3.5 py-2 backdrop-blur-sm">
-                    <span className="mr-1.5 text-orange-300" aria-hidden="true">✓</span>
-                    {highlight}
-                  </li>
-                ))}
+              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-white/80 sm:text-sm">
+                {homepage.hero_highlights
+                  .filter((highlight) => highlight.trim())
+                  .map((highlight) => (
+                    <li key={highlight} className="flex items-center gap-2">
+                      <span className="text-orange-300" aria-hidden="true">✓</span>
+                      {highlight}
+                    </li>
+                  ))}
               </ul>
             )}
+          </div>
+
+          <div className="store-hero-visual" aria-hidden="true">
+            <Image
+              src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=85"
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 42vw"
+              priority
+              className="store-hero-image"
+            />
+            <div className="store-hero-note">
+              <strong>Find parts with confidence</strong>
+              <span>Check model, grade and availability on every listing.</span>
+            </div>
           </div>
         </div>
       </section>
@@ -122,16 +108,13 @@ export default function HomePage() {
       />
 
       {/* Categories */}
-      {homepage.show_categories && <section
-        id="categories"
-        className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20"
-      >
+      {homepage.show_categories && <section id="categories" className="site-container site-section">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-orange-600">
+            <p className="site-eyebrow">
               Browse by category
             </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+            <h2 className="site-section-heading mt-2">
               {homepage.category_heading}
             </h2>
             <p className="mt-3 max-w-2xl text-slate-600">
@@ -155,15 +138,15 @@ export default function HomePage() {
                 <Link
                   key={name}
                   href={`/shop/${categorySlug(name)}`}
-                className="group rounded-2xl border border-slate-200 bg-white p-5 transition duration-200 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-900/5"
-              >
-                <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-orange-50 text-3xl font-bold text-orange-600 transition group-hover:bg-orange-500 group-hover:text-white">
+                  className="store-category-card group"
+                >
+                <span className="store-category-icon">
                   {category.icon_image_url ? (
                     <img src={category.icon_image_url} alt="" className="h-full w-full object-cover" />
                   ) : category.icon || categoryIcons[name] || "▣"}
                 </span>
 
-                <h3 className="mt-4 font-bold">
+                <h3 className="mt-4 font-bold text-slate-900">
                   {name || "Mobile Parts"}
                 </h3>
 
@@ -186,12 +169,12 @@ export default function HomePage() {
 
       {/* Brands */}
       {homepage.show_brands && <section className="border-y border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="site-container site-section">
           <div className="text-center">
-            <p className="text-sm font-bold uppercase tracking-widest text-orange-600">
+            <p className="site-eyebrow">
               Find compatible parts
             </p>
-            <h2 className="mt-2 text-2xl font-black sm:text-3xl">
+            <h2 className="site-section-heading mt-2">
               {homepage.brand_heading}
             </h2>
           </div>
@@ -201,7 +184,7 @@ export default function HomePage() {
               <Link
                 key={brand}
                 href={`/search?q=${encodeURIComponent(brand)}`}
-                className="flex min-h-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold text-slate-700 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+                className="store-brand-link"
               >
                 {brand}
               </Link>
@@ -214,30 +197,26 @@ export default function HomePage() {
         </div>
       </section>}
 
-      {homepage.show_featured && <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+      {homepage.show_featured && <section className="site-container site-section">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-bold uppercase tracking-widest text-orange-600">
               Explore our catalog
             </p>
             <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-              {search.trim() ? "Matching Products" : homepage.featured_heading}
+              {homepage.featured_heading}
             </h2>
             <p className="mt-3 text-slate-600">
-              {search.trim()
-                ? `Results for "${search}"`
-                : "Hand-picked parts from our current catalog."}
+              Browse selected products from the current catalog.
             </p>
           </div>
 
-          {!search.trim() && (
-            <Link
-              href="/search"
-              className="font-bold text-orange-600 hover:text-orange-700"
-            >
-              View all products →
-            </Link>
-          )}
+          <Link
+            href="/search"
+            className="font-bold text-orange-600 hover:text-orange-700"
+          >
+            View all products →
+          </Link>
         </div>
 
         {featuredProducts.length > 0 ? (
@@ -249,25 +228,22 @@ export default function HomePage() {
         ) : (
           <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-14 text-center">
             <span className="text-4xl" aria-hidden="true">⌕</span>
-            <h3 className="mt-3 text-xl font-bold">
-              {search.trim() ? "No matching products found" : "No featured products yet"}
-            </h3>
+            <h3 className="mt-3 text-xl font-bold">No featured products yet</h3>
             <p className="mt-2 text-slate-600">
-              {search.trim() ? "Try another product name, brand or model." : "Mark products as featured in CMS Products to show them here."}
+              Explore the full catalog to see all currently listed parts.
             </p>
-            {search.trim() && <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="mt-5 rounded-xl bg-orange-500 px-5 py-3 font-bold text-white hover:bg-orange-600"
+            <Link
+              href="/search"
+              className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-orange-500 px-5 py-3 font-bold text-white hover:bg-orange-600"
             >
-              Clear Search
-            </button>}
+              Browse all parts
+            </Link>
           </div>
         )}
       </section>}
 
       {homepage.show_products && <section className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+        <div className="site-container site-section">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-orange-600">Browse the catalog</p>
@@ -285,7 +261,7 @@ export default function HomePage() {
         </div>
       </section>}
 
-      {homepage.show_reviews && reviews.length > 0 && <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+      {homepage.show_reviews && reviews.length > 0 && <section className="site-container site-section">
         <div className="text-center">
           <p className="text-sm font-bold uppercase tracking-widest text-orange-600">Customer feedback</p>
           <h2 className="mt-2 text-3xl font-black tracking-tight">{homepage.reviews_heading}</h2>
@@ -312,16 +288,14 @@ export default function HomePage() {
       </section>}
 
       {/* Retailer CTA */}
-      {homepage.show_retailer_cta && <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8 lg:pb-20">
-        <div className="relative overflow-hidden rounded-3xl bg-slate-950 px-6 py-10 text-white sm:px-10 sm:py-14 lg:px-14">
-          <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-orange-500/20 blur-3xl" />
-
+      {homepage.show_retailer_cta && <section className="site-container pb-14 lg:pb-20">
+        <div className="store-retailer-callout">
           <div className="relative flex flex-col justify-between gap-8 md:flex-row md:items-center">
             <div className="max-w-2xl">
-              <p className="text-sm font-bold uppercase tracking-widest text-orange-400">
+              <p className="site-eyebrow text-orange-300">
                 For retailers
               </p>
-              <h2 className="mt-3 text-3xl font-black sm:text-4xl">
+              <h2 className="site-section-heading mt-3 text-white">
                 {homepage.retailer_heading}
               </h2>
               <p className="mt-4 leading-7 text-slate-300">
@@ -331,7 +305,7 @@ export default function HomePage() {
 
             <Link
               href="/retailer"
-              className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-orange-500 px-6 py-3 font-bold text-white transition hover:bg-orange-600"
+              className="site-button site-button-primary shrink-0"
             >
               {homepage.retailer_button_label} →
             </Link>
@@ -339,52 +313,6 @@ export default function HomePage() {
         </div>
       </section>}
 
-      {/* Trust / Support */}
-      <section className="border-t border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:grid-cols-3 sm:px-6 lg:px-8">
-          <div className="flex gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-xl text-orange-600">
-              ✓
-            </span>
-            <div>
-              <h3 className="font-bold">Clear Product Details</h3>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Review product information and compatibility before ordering.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-xl text-orange-600">
-              ⌕
-            </span>
-            <div>
-              <h3 className="font-bold">Easy Product Discovery</h3>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Search the catalog by part name, brand or model.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-xl text-orange-600">
-              ☎
-            </span>
-            <div>
-              <h3 className="font-bold">Customer Support</h3>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Visit our customer care page for available support options.
-              </p>
-              <Link
-                href="/customer-care"
-                className="mt-2 inline-block text-sm font-bold text-orange-600 hover:text-orange-700"
-              >
-                Contact us →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

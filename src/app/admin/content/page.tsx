@@ -30,35 +30,36 @@ type HomepageContent = {
 };
 
 const initialContent: HomepageContent = {
-  eyebrow: "UMER MOBILE PARTS",
-  headline: "Your Repair Starts With the Right Part",
+  eyebrow: "MOBILE REPAIR PARTS",
+  headline: "The right part for your repair",
   description:
-    "Explore displays, batteries, charging parts and more. Browse the catalog to find the mobile parts you need for the repair ahead.",
-  button_label: "Shop Parts",
+    "Search displays, batteries and repair parts by brand or model. Check product grade, compatibility and stock before you order.",
+  button_label: "Browse all parts",
   button_href: "/search",
   hero_highlights: [
-    "Easy product discovery",
-    "Model-focused browsing",
-    "Customer support",
+    "Search by model",
+    "Product details and stock",
+    "Order support available",
   ],
   category_heading: "Shop by Category",
   category_description:
-    "Find the spare part you need with a simpler category-based shopping experience.",
+    "Start with a part type, then check the product listing to confirm it matches your device.",
   show_categories: true,
-  brand_heading: "Shop by Mobile Brand",
+  brand_heading: "Browse by brand",
   brand_description:
-    "Availability and model compatibility should be confirmed against the actual product listing.",
+    "Choose a brand to find products listed for its devices. Confirm the exact model before ordering.",
   show_brands: true,
-  featured_heading: "Featured Products",
+  featured_heading: "Featured parts",
   show_featured: true,
-  products_heading: "More Products",
+  products_heading: "Explore more parts",
   show_products: true,
   show_reviews: true,
   reviews_heading: "What Customers Say",
   show_retailer_cta: true,
-  retailer_heading: "Looking for wholesale?",
-  retailer_description: "For retailers and repair shops",
-  retailer_button_label: "Explore retailer options",
+  retailer_heading: "Buying for a repair shop?",
+  retailer_description:
+    "Explore retailer access for business ordering. Product availability and retailer pricing are shown in the catalog when available.",
+  retailer_button_label: "Retailer information",
 };
 
 const fieldClass =
@@ -96,8 +97,48 @@ export default function AdminContentPage() {
         setContent({
           ...initialContent,
           ...data.content,
-          ...(data.content.headline === "Find Quality Mobile Spare Parts"
+          ...(data.content.eyebrow === "UMER MOBILE PARTS" ||
+          data.content.eyebrow === "PARTS OF THE REPLACEMENT"
+            ? { eyebrow: initialContent.eyebrow }
+            : {}),
+          ...(data.content.headline === "Your Repair Starts With the Right Part" ||
+          data.content.headline === "Find Quality Mobile Spare Parts" ||
+          data.content.headline === "Find the right part for your next repair"
             ? { headline: initialContent.headline }
+            : {}),
+          ...(data.content.description ===
+          "Explore displays, batteries, charging parts and more. Browse the catalog to find the mobile parts you need for the repair ahead."
+            ? { description: initialContent.description }
+            : {}),
+          ...(data.content.button_label === "Shop Parts"
+            ? { button_label: initialContent.button_label }
+            : {}),
+          ...(data.content.category_description ===
+          "Find the spare part you need with a simpler category-based shopping experience."
+            ? { category_description: initialContent.category_description }
+            : {}),
+          ...(data.content.brand_heading === "Shop by Mobile Brand"
+            ? { brand_heading: initialContent.brand_heading }
+            : {}),
+          ...(data.content.brand_description ===
+          "Availability and model compatibility should be confirmed against the actual product listing."
+            ? { brand_description: initialContent.brand_description }
+            : {}),
+          ...(data.content.featured_heading === "Featured Products"
+            ? { featured_heading: initialContent.featured_heading }
+            : {}),
+          ...(data.content.retailer_heading === "Looking for wholesale?"
+            ? { retailer_heading: initialContent.retailer_heading }
+            : {}),
+          ...(data.content.retailer_description === "For retailers and repair shops"
+            ? { retailer_description: initialContent.retailer_description }
+            : {}),
+          ...(data.content.retailer_button_label === "Explore retailer options"
+            ? { retailer_button_label: initialContent.retailer_button_label }
+            : {}),
+          ...(data.content.description ===
+          "Browse displays, batteries, charging parts and more by device brand, model or part type. Check each listing for product grade, compatibility and current stock before ordering."
+            ? { description: initialContent.description }
             : {}),
           ...(data.content.description ===
           "Displays, batteries, charging parts and other mobile spare parts — explore our catalog to find the part that matches your device."

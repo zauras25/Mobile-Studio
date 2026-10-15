@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/components/CartProvider";
 import { useCatalog } from "@/components/CatalogProvider";
+import ProductImage from "@/components/ProductImage";
 import type { Product } from "@/data/store";
 import { formatStorePrice, retailerPrice } from "@/lib/pricing";
 
@@ -42,19 +42,18 @@ export default function ProductCard({ product }: Props) {
   }
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl hover:shadow-slate-900/5">
+    <article className="site-card group flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl">
       <Link
         href={`/product/${product.slug}`}
         className="relative block overflow-hidden bg-slate-100"
         aria-label={`View ${product.name}`}
       >
         <div className="relative aspect-square">
-          <Image
+          <ProductImage
             src={product.image}
             alt={product.name}
-            fill
-            className="object-cover transition duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover transition duration-500 group-hover:scale-105"
           />
         </div>
 

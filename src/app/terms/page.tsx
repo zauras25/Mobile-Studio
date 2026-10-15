@@ -4,13 +4,13 @@ export default function TermsPage() {
   return (
     <PolicyPage
       title="Terms and conditions"
-      description="How the Umer Mobile Parts catalog, customer orders, ratings, and retailer applications currently work."
+      description="How this store's catalog, customer orders, ratings, and retailer applications currently work."
       sections={[
         {
           heading: "Using the website",
           paragraphs: [
             "Use the site to browse mobile spare parts, submit a customer order request, manage an account, leave a product rating, or apply for retailer access. Provide accurate contact and delivery information, and do not attempt to interfere with the site or access another person's account.",
-            "Catalog descriptions, device models, images, prices, and stock help identify products but may not answer every compatibility question. Check the exact device model and part fit with Umer Mobile Parts before ordering or installing a part if there is any doubt.",
+            "Catalog descriptions, device models, images, prices, and stock help identify products but may not answer every compatibility question. Check the exact device model and part fit with the store before ordering or installing a part if there is any doubt.",
           ],
         },
         {

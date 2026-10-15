@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useCatalog } from "@/components/CatalogProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { normalizeStoreName, STORE_NAME } from "@/lib/site-config";
 
 type Settings = {
   store: {
@@ -42,7 +43,7 @@ const emptyDeliveryZone: DeliveryZoneForm = {
 
 const initialSettings: Settings = {
   store: {
-    name: "Umer Mobile Parts",
+    name: STORE_NAME,
     support_email: "",
     phone: "",
     whatsapp: "",
@@ -92,7 +93,9 @@ export default function AdminSettingsPage() {
           if (row.setting_key === "store") {
             next.store = {
               ...next.store,
-              name: settingText(row.setting_value.name, next.store.name),
+              name: normalizeStoreName(
+                settingText(row.setting_value.name, next.store.name),
+              ),
               support_email: settingText(row.setting_value.support_email),
               phone: settingText(row.setting_value.phone),
               whatsapp: settingText(row.setting_value.whatsapp),

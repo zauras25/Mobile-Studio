@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
+import ProductImage from "@/components/ProductImage";
 
 export default function CartPage() {
   const {
@@ -63,11 +64,14 @@ export default function CartPage() {
             {items.map((item) => (
               <div key={item.product.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <div className="flex flex-col gap-5 sm:flex-row">
-                  <img
-                    src={item.product.image}
-                    alt={item.product.name}
-                    className="h-28 w-full rounded-xl object-cover sm:w-28"
-                  />
+                  <div className="relative h-28 w-full overflow-hidden rounded-xl sm:w-28">
+                    <ProductImage
+                      src={item.product.image}
+                      alt={item.product.name}
+                      sizes="112px"
+                      className="object-cover"
+                    />
+                  </div>
 
                   <div className="flex-1">
                     <div className="flex flex-col justify-between gap-3 sm:flex-row">

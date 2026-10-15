@@ -9,7 +9,7 @@ export default function ReturnsPolicyPage() {
         {
           heading: "Contact the store before returning a product",
           paragraphs: [
-            "If you receive the wrong item, find a problem, or need to discuss an order, contact Umer Mobile Parts before sending anything back. Provide the six-digit order tracking code, checkout phone number, product name, and a clear description of the issue.",
+            "If you receive the wrong item, find a problem, or need to discuss an order, contact the store before sending anything back. Provide the six-digit order tracking code, checkout phone number, product name, and a clear description of the issue.",
             "Keep the item, packaging, included accessories, and order information available while the store reviews your request. Do not ship or hand over a product for return until the store confirms the return address and instructions. This draft does not set a return window or guarantee that every request will qualify.",
           ],
         },

@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
@@ -14,7 +12,7 @@ export default function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={<main>{children}</main>}>
+    <Suspense fallback={<div>{children}</div>}>
       <RouteLayout>{children}</RouteLayout>
     </Suspense>
   );
@@ -40,7 +38,7 @@ function RouteLayout({ children }: { children: React.ReactNode }) {
               Could not sync the live catalog. Showing demo products instead. {error}
             </p>
           )}
-          <main>{children}</main>
+          <div>{children}</div>
           <Footer />
         </>
       )}

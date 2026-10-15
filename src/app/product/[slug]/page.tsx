@@ -1,50 +1,83 @@
-"use client";
-
-import Link from "next/link";
+import type { Metadata } from "next";
 import { Suspense } from "react";
-import { useParams } from "next/navigation";
-import ProductDetailClient from "@/components/ProductDetailClient";
-import { useCatalog } from "@/components/CatalogProvider";
+import type { Product } from "@/data/store";
+import { products as fallbackProducts } from "@/data/store";
+import { getPublicCatalogServerClient } from "@/lib/supabase/public-server";
+import { SITE_URL } from "@/lib/site-config";
+import ProductPageClient from "./ProductPageClient";
 
-export default function ProductPage() {
+type PageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+type ProductMetadata = Pick<
+  Product,
+  "name" | "brand" | "model" | "category" | "quality"
+>;
+
+async function getProductMetadata(slug: string): Promise<ProductMetadata | null> {
+  const client = getPublicCatalogServerClient();
+  if (!client) {
+    const product = fallbackProducts.find((item) => item.slug === slug);
+    return product ?? null;
+  }
+
+  const { data, error } = await client
+    .from("products")
+    .select("name,brand,model,category,quality")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle()
+    .returns<ProductMetadata>();
+
+  if (error) {
+    console.error(`[SEO] Could not load product metadata for "${slug}":`, error.message);
+    const fallback = fallbackProducts.find((item) => item.slug === slug);
+    return fallback ?? null;
+  }
+
+  return data;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductMetadata(slug);
+
+  if (!product) {
+    return {
+      title: "Mobile replacement parts",
+      description: "Browse mobile parts by device brand, model and category.",
+    };
+  }
+
+  const title = `${product.name} for ${product.model}`;
+  const description = `${product.quality} ${product.category.toLowerCase()} for ${product.brand} ${product.model}. Review product details and current availability before ordering.`;
+
+  return {
+    title,
+    description,
+    keywords: [product.name, product.brand, product.model, product.category, "mobile repair parts"],
+    alternates: {
+      canonical: new URL(`/product/${encodeURIComponent(slug)}`, SITE_URL).toString(),
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: new URL(`/product/${encodeURIComponent(slug)}`, SITE_URL).toString(),
+    },
+  };
+}
+
+export default function ProductPage({ params }: PageProps) {
   return (
     <Suspense fallback={<main className="mx-auto max-w-7xl px-4 py-16 text-center text-slate-500">Loading product…</main>}>
-      <ProductPageContent />
+      <ProductRoute params={params} />
     </Suspense>
   );
 }
 
-function ProductPageContent() {
-  const params = useParams<{ slug: string }>();
-  const { products, status, error } = useCatalog();
-  const product = products.find((item) => item.slug === params.slug);
-
-  if (product) {
-    return <ProductDetailClient product={product} />;
-  }
-
-  if (status === "loading") {
-    return (
-      <main className="mx-auto max-w-7xl px-4 py-16 text-center text-slate-500">
-        Loading product…
-      </main>
-    );
-  }
-
-  return (
-    <main className="mx-auto max-w-2xl px-4 py-20 text-center">
-      <h1 className="text-3xl font-black">Product not found</h1>
-      <p className="mt-3 text-slate-500">
-        {status === "error"
-          ? `The live catalog could not be loaded. ${error}`
-          : "This product may have been removed or is not published yet."}
-      </p>
-      <Link
-        href="/search"
-        className="mt-6 inline-flex rounded-xl bg-orange-500 px-5 py-3 font-black text-white"
-      >
-        Browse products
-      </Link>
-    </main>
-  );
+async function ProductRoute({ params }: PageProps) {
+  const { slug } = await params;
+  return <ProductPageClient slug={slug} />;
 }

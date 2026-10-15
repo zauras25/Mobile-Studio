@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useCatalog } from "@/components/CatalogProvider";
 
 type PolicyPageProps = {
   title: string;
@@ -16,10 +19,12 @@ export default function PolicyPage({
   sections,
   confirmationItems,
 }: PolicyPageProps) {
+  const { settings } = useCatalog();
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-12 text-slate-900 sm:px-6 lg:px-8">
       <article className="mx-auto max-w-3xl">
-        <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-600">Umer Mobile Parts · Store draft</p>
+        <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-600">{settings.storeName} · Store draft</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight">{title}</h1>
         <p className="mt-4 text-lg leading-8 text-slate-600">{description}</p>
 
@@ -45,7 +50,7 @@ export default function PolicyPage({
         </div>
 
         <p className="mt-8 rounded-xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
-          For an active order, ask Umer Mobile Parts to confirm the applicable price, stock, compatibility, delivery, payment, or resolution directly.
+          For an active order, contact {settings.storeName} to confirm the applicable price, stock, compatibility, delivery, payment, or resolution directly.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
           <Link href="/customer-care" className="ui-button-primary">Contact Customer Care</Link>

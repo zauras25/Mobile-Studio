@@ -20,6 +20,7 @@ import {
   isRetailerDemoEnabled,
   subscribeToRetailerDemoSession,
 } from "@/lib/auth/retailer-demo";
+import { normalizeStoreName, STORE_NAME } from "@/lib/site-config";
 
 export type StoreCategory = {
   name: string;
@@ -111,40 +112,50 @@ export type HomepageContent = {
   retailer_button_label: string;
 };
 
+const unavailableProductImageIds = [
+  "photo-1592286927505-2fd7b8e6b9a0",
+  "photo-1609592424274-7f7f8f6e8b35",
+];
+
+function normalizeProductImage(image: string): string {
+  return unavailableProductImageIds.some((id) => image.includes(id)) ? "" : image;
+}
+
 const initialHomepage: HomepageContent = {
-  eyebrow: "UMER MOBILE PARTS",
-  headline: "Your Repair Starts With the Right Part",
+  eyebrow: "MOBILE REPAIR PARTS",
+  headline: "The right part for your repair",
   description:
-    "Explore displays, batteries, charging parts and more. Browse the catalog to find the mobile parts you need for the repair ahead.",
-  button_label: "Shop Parts",
+    "Search displays, batteries and repair parts by brand or model. Check product grade, compatibility and stock before you order.",
+  button_label: "Browse all parts",
   button_href: "/search",
   hero_highlights: [
-    "Easy product discovery",
-    "Model-focused browsing",
-    "Customer support",
+    "Search by model",
+    "Product details and stock",
+    "Order support available",
   ],
   category_heading: "Shop by Category",
   category_description:
-    "Find the spare part you need with a simpler category-based shopping experience.",
+    "Start with a part type, then check the product listing to confirm it matches your device.",
   show_categories: true,
-  brand_heading: "Shop by Mobile Brand",
+  brand_heading: "Browse by brand",
   brand_description:
-    "Availability and model compatibility should be confirmed against the actual product listing.",
+    "Choose a brand to find products listed for its devices. Confirm the exact model before ordering.",
   show_brands: true,
-  featured_heading: "Featured Products",
+  featured_heading: "Featured parts",
   show_featured: true,
-  products_heading: "More Products",
+  products_heading: "Explore more parts",
   show_products: true,
   show_reviews: true,
   reviews_heading: "What Customers Say",
   show_retailer_cta: true,
-  retailer_heading: "Looking for wholesale?",
-  retailer_description: "For retailers and repair shops",
-  retailer_button_label: "Explore retailer options",
+  retailer_heading: "Buying for a repair shop?",
+  retailer_description:
+    "Explore retailer access for business ordering. Product availability and retailer pricing are shown in the catalog when available.",
+  retailer_button_label: "Retailer information",
 };
 
 const initialSettings: StoreSettings = {
-  storeName: "Umer Mobile Parts",
+  storeName: STORE_NAME,
   supportEmail: "",
   phone: "",
   whatsapp: "",
@@ -267,6 +278,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 
     const publishedProducts = productResult.data.map(({ old_price, retailer_discount_percent, ...product }) => ({
       ...product,
+      image: normalizeProductImage(product.image),
       oldPrice: old_price,
       retailerDiscountPercent: Number(retailer_discount_percent),
     }));
@@ -320,12 +332,53 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         ? {
             ...initialHomepage,
             ...savedHomepage,
-            ...(savedHomepage.headline === "Find Quality Mobile Spare Parts"
+            ...(savedHomepage.headline === "Your Repair Starts With the Right Part" ||
+            savedHomepage.headline === "Find Quality Mobile Spare Parts" ||
+            savedHomepage.headline === "Find the right part for your next repair"
               ? { headline: initialHomepage.headline }
               : {}),
             ...(savedHomepage.description ===
+              "Explore displays, batteries, charging parts and more. Browse the catalog to find the mobile parts you need for the repair ahead." ||
+            savedHomepage.description ===
+              "Browse displays, batteries, charging parts and more by device brand, model or part type. Check each listing for product grade, compatibility and current stock before ordering." ||
+            savedHomepage.description ===
             "Displays, batteries, charging parts and other mobile spare parts — explore our catalog to find the part that matches your device."
               ? { description: initialHomepage.description }
+              : {}),
+            ...(savedHomepage.eyebrow === "UMER MOBILE PARTS" ||
+            savedHomepage.eyebrow === "PARTS OF THE REPLACEMENT"
+              ? { eyebrow: initialHomepage.eyebrow }
+              : {}),
+            ...(savedHomepage.button_label === "Shop Parts"
+              ? { button_label: initialHomepage.button_label }
+              : {}),
+            ...(typeof savedHomepage.button_href !== "string" ||
+            !savedHomepage.button_href.startsWith("/") ||
+            savedHomepage.button_href.startsWith("//")
+              ? { button_href: initialHomepage.button_href }
+              : {}),
+            ...(savedHomepage.category_description ===
+            "Find the spare part you need with a simpler category-based shopping experience."
+              ? { category_description: initialHomepage.category_description }
+              : {}),
+            ...(savedHomepage.brand_heading === "Shop by Mobile Brand"
+              ? { brand_heading: initialHomepage.brand_heading }
+              : {}),
+            ...(savedHomepage.brand_description ===
+            "Availability and model compatibility should be confirmed against the actual product listing."
+              ? { brand_description: initialHomepage.brand_description }
+              : {}),
+            ...(savedHomepage.featured_heading === "Featured Products"
+              ? { featured_heading: initialHomepage.featured_heading }
+              : {}),
+            ...(savedHomepage.retailer_heading === "Looking for wholesale?"
+              ? { retailer_heading: initialHomepage.retailer_heading }
+              : {}),
+            ...(savedHomepage.retailer_description === "For retailers and repair shops"
+              ? { retailer_description: initialHomepage.retailer_description }
+              : {}),
+            ...(savedHomepage.retailer_button_label === "Explore retailer options"
+              ? { retailer_button_label: initialHomepage.retailer_button_label }
               : {}),
             hero_highlights:
               "hero_highlights" in savedHomepage &&
@@ -359,10 +412,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       storeSettings.contact_verified === true && hasAllContactDetails;
     const deliveryVerified = deliverySettings.details_verified === true;
     setSettings({
-      storeName:
-        typeof storeSettings.name === "string"
-          ? storeSettings.name
-          : initialSettings.storeName,
+      storeName: normalizeStoreName(storeSettings.name),
       supportEmail:
         contactVerified && typeof storeSettings.support_email === "string"
           ? storeSettings.support_email
