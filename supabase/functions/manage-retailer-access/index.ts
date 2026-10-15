@@ -1,156 +1,159 @@
-import { createClient, type User } from "https://esm.sh/@supabase/supabase-js@2";
+﻿import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-function jsonResponse(body: Record<string, unknown>, status: number) {
+function respond(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-Deno.serve(async (request) => {
-  if (request.method === "OPTIONS") {
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
-  if (request.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed." }, 405);
+
+  if (req.method !== "POST") {
+    return respond({ error: "Method not allowed." }, 405);
   }
 
-  const authorization = request.headers.get("Authorization");
-  if (!authorization?.startsWith("Bearer ")) {
-    return jsonResponse({ error: "Admin sign-in is required." }, 401);
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const url = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const siteUrl = Deno.env.get("SITE_URL");
-  if (!supabaseUrl || !anonKey || !serviceRoleKey || !siteUrl) {
-    return jsonResponse({ error: "Retailer account setup is not configured on the server." }, 500);
+  const secretKey =
+    Deno.env.get("SUPABASE_SECRET_KEY") ??
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!url || !anonKey || !secretKey) {
+    return respond({ error: "Server Supabase configuration is incomplete." }, 500);
   }
 
-  let redirectTo: string;
-  try {
-    const parsedSiteUrl = new URL(siteUrl);
-    if (parsedSiteUrl.protocol !== "https:" && parsedSiteUrl.hostname !== "localhost") {
-      return jsonResponse({ error: "Retailer account setup requires an HTTPS site URL." }, 500);
-    }
-    redirectTo = new URL("/retailer/setup-password", parsedSiteUrl).toString();
-  } catch {
-    return jsonResponse({ error: "The configured site URL is invalid." }, 500);
+  const authorization = req.headers.get("Authorization");
+
+  if (!authorization?.startsWith("Bearer ")) {
+    return respond({ error: "Admin sign-in is required." }, 401);
   }
 
-  const callerClient = createClient(supabaseUrl, anonKey, {
+  const userClient = createClient(url, anonKey, {
     global: { headers: { Authorization: authorization } },
-    auth: { autoRefreshToken: false, persistSession: false },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
   });
-  const { data: callerData, error: callerError } = await callerClient.auth.getUser();
-  if (callerError || !callerData.user) {
-    return jsonResponse({ error: "Your admin session is invalid or expired. Sign in again." }, 401);
-  }
-  if (callerData.user.app_metadata.role !== "admin") {
-    return jsonResponse({ error: "Only CMS admins can provision retailer access." }, 403);
+
+  const { data: userData, error: userError } =
+    await userClient.auth.getUser();
+
+  if (userError || !userData.user) {
+    return respond({ error: "Your session is invalid or expired." }, 401);
   }
 
-  let body: unknown;
+  let body: { applicationId?: number };
+
   try {
-    body = await request.json();
+    body = await req.json();
   } catch {
-    return jsonResponse({ error: "A valid retailer application ID is required." }, 400);
-  }
-  const applicationId = isRecord(body) ? body.applicationId : null;
-  if (typeof applicationId !== "number" || !Number.isSafeInteger(applicationId) || applicationId < 1) {
-    return jsonResponse({ error: "A valid retailer application ID is required." }, 400);
+    return respond({ error: "Invalid request body." }, 400);
   }
 
-  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-  const { data: application, error: applicationError } = await adminClient
-    .from("retailer_applications")
-    .select("id,email,business_name,status")
-    .eq("id", applicationId)
-    .maybeSingle();
+  const applicationId = body.applicationId;
+
+  if (
+    typeof applicationId !== "number" ||
+    !Number.isSafeInteger(applicationId) ||
+    applicationId < 1
+  ) {
+    return respond({ error: "A valid application ID is required." }, 400);
+  }
+
+  // The caller must be authorized by the application's existing RLS policies.
+  // Do not grant public access to retailer applications.
+  const { data: application, error: applicationError } =
+    await userClient
+      .from("retailer_applications")
+      .select("id,email,status,business_name")
+      .eq("id", applicationId)
+      .maybeSingle();
+
   if (applicationError) {
-    return jsonResponse({ error: `Could not verify the application: ${applicationError.message}` }, 500);
+    return respond({
+      error: "Could not verify application permissions.",
+      details: applicationError.message,
+    }, 403);
   }
+
   if (!application || application.status !== "approved") {
-    return jsonResponse({ error: "Approve this retailer application before granting account access." }, 409);
+    return respond({
+      error: "Application not found or not approved.",
+    }, 403);
   }
+
+  const adminClient = createClient(url, secretKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
 
   const email = application.email.trim().toLowerCase();
+
   if (!email) {
-    return jsonResponse({ error: "This application has no email address for account setup." }, 400);
+    return respond({ error: "The application has no email address." }, 400);
   }
 
-  let existingUser: User | undefined;
-  for (let page = 1; page <= 100; page += 1) {
-    const { data, error: listError } = await adminClient.auth.admin.listUsers({
-      page,
-      perPage: 1000,
-    });
-    if (listError) {
-      return jsonResponse({ error: `Could not check for an existing account: ${listError.message}` }, 500);
-    }
-    existingUser = data.users.find((user) => user.email?.toLowerCase() === email);
-    if (existingUser || data.users.length < 1000) break;
-    if (page === 100) {
-      return jsonResponse({ error: "Could not safely complete the account lookup. Contact the project administrator." }, 500);
-    }
-  }
+  const redirectTo = Deno.env.get("RETAILER_SETUP_REDIRECT_URL");
 
-  if (existingUser) {
-    const role = existingUser.app_metadata.role;
-    if (role && role !== "customer" && role !== "retailer") {
-      return jsonResponse({ error: "This email already belongs to an account with a different privileged role." }, 409);
-    }
-    const { error: updateError } = await adminClient.auth.admin.updateUserById(existingUser.id, {
-      app_metadata: { ...existingUser.app_metadata, role: "retailer" },
-      user_metadata: {
-        ...existingUser.user_metadata,
-        business_name: application.business_name,
-        retailer_application_id: String(application.id),
-      },
-    });
-    if (updateError) {
-      return jsonResponse({ error: `Could not enable retailer access: ${updateError.message}` }, 500);
-    }
-    return jsonResponse({ status: "existing_account" }, 200);
-  }
-
-  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
-    email,
-    {
-      data: {
-        business_name: application.business_name,
-        retailer_application_id: String(application.id),
-      },
-      redirectTo,
-    },
-  );
-  if (inviteError || !inviteData.user) {
-    return jsonResponse({
-      error: `Could not send the retailer invitation: ${inviteError?.message ?? "Supabase did not return the invited account."}`,
-    }, 502);
-  }
-
-  const { error: roleError } = await adminClient.auth.admin.updateUserById(inviteData.user.id, {
-    app_metadata: { ...inviteData.user.app_metadata, role: "retailer" },
-  });
-  if (roleError) {
-    return jsonResponse({
-      error: `The invitation was sent, but retailer access could not be assigned: ${roleError.message}. Retry access setup from the approved application.`,
+  if (!redirectTo) {
+    return respond({
+      error: "RETAILER_SETUP_REDIRECT_URL is not configured.",
     }, 500);
   }
 
-  return jsonResponse({ status: "invited" }, 200);
+  const { data: invitation, error: inviteError } =
+    await adminClient.auth.admin.inviteUserByEmail(email, {
+      redirectTo,
+      data: {
+        retailer_application_id: application.id,
+        retailer_business_name: application.business_name,
+      },
+    });
+
+  if (inviteError) {
+    const message = inviteError.message.toLowerCase();
+
+    if (
+      message.includes("already been registered") ||
+      message.includes("already registered") ||
+      message.includes("already exists")
+    ) {
+      return respond({
+        status: "existing_account",
+        message: "An account already exists. Send a password reset email.",
+      });
+    }
+
+    console.error("[manage-retailer-access] Invitation failed:", inviteError.message);
+
+    return respond({
+      error: "Supabase could not send the retailer invitation.",
+      details: inviteError.message,
+    }, 400);
+  }
+
+  if (!invitation.user) {
+    return respond({
+      error: "Supabase did not return the invited user.",
+    }, 500);
+  }
+
+  return respond({
+    status: "invited",
+    message: "Retailer invitation accepted by Supabase Auth.",
+  });
 });
